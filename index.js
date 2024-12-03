@@ -81,18 +81,33 @@ async function run() {
     // update a job data
     app.put("/job/:id", async (req, res) => {
       const id = req.params.id;
-      const jobDat = req.body;
+      const jobData = req.body;
       const quire = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const updateDoc = {
         $set: {
-          ...jobDat,
+          ...jobData,
         },
       };
       const result = await jobsCollection.updateOne(quire, updateDoc, options);
       res.send(result);
     });
 
+    // get al bide for a user by email
+    app.get("/my-bids/:email", async (req, res) => {
+      const email = req.params.email;
+      const quire = { email: email };
+      const result = await bidsCollection.find(quire).toArray();
+      res.send(result);
+    });
+
+    // get al bide for a user by email
+    app.get("/bid-requests/:email", async (req, res) => {
+      const email = req.params.email;
+      const quire = { buyerEmail: email };
+      const result = await bidsCollection.find(quire).toArray();
+      res.send(result);
+    });
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
