@@ -96,7 +96,7 @@ async function run() {
     // get al bide for a user by email
     app.get("/my-bids/:email", async (req, res) => {
       const email = req.params.email;
-      const quire = { email: email };
+      const quire = { email };
       const result = await bidsCollection.find(quire).toArray();
       res.send(result);
     });
@@ -104,7 +104,7 @@ async function run() {
     // get al bide for a user by email
     app.get("/bid-requests/:email", async (req, res) => {
       const email = req.params.email;
-      const quire = { buyerEmail: email };
+      const quire = { "buyer.email": email };
       const result = await bidsCollection.find(quire).toArray();
       res.send(result);
     });
