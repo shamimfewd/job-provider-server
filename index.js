@@ -18,6 +18,25 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookeParser());
 
+// verify token
+const verifyToken = (req, res, next) => {
+  console.log("ok");
+  const token = req.cookies?.token;
+  if (!token) return res.status(401).send({ message: "unauthorized access" });
+  if (token) {
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+      if (err) {
+        console.log(err);
+        return res.status(401).send({ message: "unauthorized access" });
+      }
+      console.log(decoded);
+      req.user = decoded;
+      next();
+    });
+  }
+  console.log(token);
+};
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ssblxww.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -92,17 +111,11 @@ async function run() {
 
     // get all jobs posted by a specific user
 
-    app.get("/jobs/:email", async (req, res) => {
-      const token = req.cookies?.token;
-      if (token) {
-        jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
-          if (err) {
-            return console.log(err);
-          }
-          console.log(decoded);
-        });
+    app.get("/jobs/:email", verifyToken, async (req, res) => {
+      const tokenEmail = req.user.email;
+      if (tokenEmail !== email) {
+        return res.status(403).send({ message: "forbidden access" });
       }
-      console.log(token);
       const email = req.params.email;
       const quire = { "buyer.email": email };
       const result = await jobsCollection.find(quire).toArray();
@@ -133,16 +146,16 @@ async function run() {
       res.send(result);
     });
 
-    // get al bide for a user by email
-    app.get("/my-bids/:email", async (req, res) => {
+    // get all bide for a user by email
+    app.get("/my-bids/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
       const quire = { email };
       const result = await bidsCollection.find(quire).toArray();
       res.send(result);
     });
 
-    // get al bide for a user by email
-    app.get("/bid-requests/:email", async (req, res) => {
+    // get all bide request for a user by email
+    app.get("/bid-requests/:email", verifyToken, async (req, res) => {
       const email = req.params.email;
       const quire = { "buyer.email": email };
       const result = await bidsCollection.find(quire).toArray();
