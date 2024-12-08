@@ -20,7 +20,6 @@ app.use(cookeParser());
 
 // verify token
 const verifyToken = (req, res, next) => {
-  console.log("ok");
   const token = req.cookies?.token;
   if (!token) return res.status(401).send({ message: "unauthorized access" });
   if (token) {
@@ -29,12 +28,11 @@ const verifyToken = (req, res, next) => {
         console.log(err);
         return res.status(401).send({ message: "unauthorized access" });
       }
-      console.log(decoded);
+
       req.user = decoded;
       next();
     });
   }
-  console.log(token);
 };
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.ssblxww.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
@@ -112,18 +110,17 @@ async function run() {
     // get all jobs posted by a specific user
 
     app.get("/jobs/:email", verifyToken, async (req, res) => {
-      const tokenEmail = req.user.email;
+      const tokenEmail = req.user?.email;
+      const email = req.params.email;
       if (tokenEmail !== email) {
         return res.status(403).send({ message: "forbidden access" });
       }
-      const email = req.params.email;
       const quire = { "buyer.email": email };
       const result = await jobsCollection.find(quire).toArray();
       res.send(result);
     });
 
     // delete a job data
-
     app.delete("/job/:id", async (req, res) => {
       const id = req.params.id;
       const quire = { _id: new ObjectId(id) };
@@ -147,7 +144,7 @@ async function run() {
     });
 
     // get all bide for a user by email
-    app.get("/my-bids/:email", verifyToken, async (req, res) => {
+    app.get("/my-bids/:email", async (req, res) => {
       const email = req.params.email;
       const quire = { email };
       const result = await bidsCollection.find(quire).toArray();
