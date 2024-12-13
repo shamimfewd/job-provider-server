@@ -95,6 +95,16 @@ async function run() {
     //save a bid data in db
     app.post("/bid", async (req, res) => {
       const bidData = req.body;
+      // check if its a duplicate request
+      const alreadyApplied = await bidsCollection.findOne({
+        email: bidData.email,
+        jobId: bidData.jobId,
+      });
+      if (alreadyApplied) {
+        return res
+          .status(400)
+          .send("you have already placed a bid on this job!");
+      }
       const result = await bidsCollection.insertOne(bidData);
       res.send(result);
     });
@@ -170,6 +180,24 @@ async function run() {
       const result = await bidsCollection.updateOne(query, updateDoc);
       res.send(result);
     });
+
+    // get data for pagination
+    app.get("/all-jobs", async (req, res) => {
+      const size = parseInt(req.query.size);
+      const page = parseInt(req.query.page) - 1;
+      const result = await jobsCollection
+        .find()
+        .skip(page * size)
+        .limit(size)
+        .toArray();
+      res.send(result);
+    });
+    // get all jobs data for count
+    app.get("/jobs-count", async (req, res) => {
+      const count = await jobsCollection.countDocuments();
+      res.send({ count });
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
